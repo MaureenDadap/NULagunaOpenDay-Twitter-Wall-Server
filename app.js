@@ -62,7 +62,7 @@ app.get('/posts', function (req, res) {
   Post.findAll({
     limit: 100, // number of posts shown
     order: [
-      ['created_at', 'ASC'] //order in which the tweets will be displayed
+      ['created_at', 'DESC'] //order in which the tweets will be displayed
     ],
     include: [
       { model: User }
@@ -86,6 +86,7 @@ app.get('/posts/:time', function (req, res) {
     },
     order: [
       ['created_at', 'DESC']
+      //['created_at', 'ASC']
     ],
     include: [
       { model: User }
