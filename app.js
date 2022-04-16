@@ -60,9 +60,9 @@ app.get('/', function (req, res) {
 app.get('/posts', function (req, res) {
 
   Post.findAll({
-    limit: 30,
+    limit: 100, // number of posts shown
     order: [
-      ['created_at', 'DESC']
+      ['created_at', 'ASC'] //order in which the tweets will be displayed
     ],
     include: [
       { model: User }
