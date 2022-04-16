@@ -21,18 +21,22 @@ basicAuthOptions.users[config.api.username] = config.api.password;
 
 var hbs = exphbs.create({
   defaultLayout: 'admin',
+  runtimeOptions: {
+    allowProtoMethodsByDefault: true,
+    allowProtoPropertiesByDefault: true
+  },
   helpers: {
-    formatDate: function(date) {
+    formatDate: function (date) {
       return date.toLocaleString('en-US');
     },
-    postType: function(type) {
-      switch(type) {
+    postType: function (type) {
+      switch (type) {
         case 1:
           return 'Instagram';
-        break;
+          break;
         case 2:
           return 'Twitter';
-        break;
+          break;
       }
     },
     paginate: paginate
@@ -64,11 +68,11 @@ app.get('/posts', function (req, res) {
       { model: User }
     ]
   })
-  .then(function(posts) {
+    .then(function (posts) {
 
-    res.json(posts);
+      res.json(posts);
 
-  });
+    });
 
 });
 
@@ -87,11 +91,11 @@ app.get('/posts/:time', function (req, res) {
       { model: User }
     ]
   })
-  .then(function(posts) {
+    .then(function (posts) {
 
-    res.json(posts);
+      res.json(posts);
 
-  });
+    });
 
 });
 
@@ -106,42 +110,42 @@ app.get('/admin', basicAuth(basicAuthOptions), function (req, res) {
   var offset = 0;
 
   Post.count()
-  .then(function(postsCount) {
+    .then(function (postsCount) {
 
-    totalPosts = postsCount;
+      totalPosts = postsCount;
 
-    if(typeof req.query.p != 'undefined') {
-      currentPage = req.query.p;
-    }
-
-    offset = (currentPage - 1) * postsPerPage;
-
-    return Post.findAll({
-      order: [
-        ['created_at', 'DESC']
-      ],
-      offset: offset,
-      limit: postsPerPage,
-      include: [
-        { model: User }
-      ]
-    });
-
-  })
-  .then(function(posts) {
-
-    res.render('admin', {
-      posts: posts,
-      pagination: {
-        page: currentPage,
-        pageCount: Math.ceil(totalPosts / postsPerPage)
-      },
-      navActive: {
-        admin: true
+      if (typeof req.query.p != 'undefined') {
+        currentPage = req.query.p;
       }
-    });
 
-  });
+      offset = (currentPage - 1) * postsPerPage;
+
+      return Post.findAll({
+        order: [
+          ['created_at', 'DESC']
+        ],
+        offset: offset,
+        limit: postsPerPage,
+        include: [
+          { model: User }
+        ]
+      });
+
+    })
+    .then(function (posts) {
+
+      res.render('admin', {
+        posts: posts,
+        pagination: {
+          page: currentPage,
+          pageCount: Math.ceil(totalPosts / postsPerPage)
+        },
+        navActive: {
+          admin: true
+        }
+      });
+
+    });
 
 });
 
@@ -150,24 +154,24 @@ app.get('/admin/delete/:id', basicAuth(basicAuthOptions), function (req, res) {
   var postToBeDeleted = {};
 
   Post.findByPk(req.params.id)
-  .then(function(post) {
+    .then(function (post) {
 
-    postToBeDeleted = post;
+      postToBeDeleted = post;
 
-    return DeletedPost.create({
-      type: post.type,
-      source_id: post.source_id,
-      link: post.link
+      return DeletedPost.create({
+        type: post.type,
+        source_id: post.source_id,
+        link: post.link
+      });
+
+    })
+    .then(function () {
+      return postToBeDeleted.destroy();
+    })
+
+    .then(function () {
+      res.redirect("/admin");
     });
-
-  })
-  .then(function() {
-    return postToBeDeleted.destroy();
-  })
-  
-  .then(function() {
-    res.redirect("/admin");
-  });
 
 });
 
@@ -182,45 +186,45 @@ app.get('/admin/ignored-users', basicAuth(basicAuthOptions), function (req, res)
       ['created_at', 'DESC']
     ]
   })
-  .then(function(users) {
+    .then(function (users) {
 
-    ignoredUsers = users;
+      ignoredUsers = users;
 
-    return User.findAll({
-      order: [
-        ['type', 'ASC'],
-        ['username', 'ASC']
-      ],
+      return User.findAll({
+        order: [
+          ['type', 'ASC'],
+          ['username', 'ASC']
+        ],
+      });
+
+    })
+    .then(function (users) {
+
+      allUsers = users;
+
+      res.render('ignored-users', {
+        ignoredUsers: ignoredUsers,
+        allUsers: allUsers,
+        navActive: {
+          ignoredUsers: true
+        }
+      });
+
     });
-
-  })
-  .then(function(users) {
-
-    allUsers = users;
-
-    res.render('ignored-users', {
-      ignoredUsers: ignoredUsers,
-      allUsers: allUsers,
-      navActive: {
-        ignoredUsers: true
-      }
-    });
-
-  });
 
 });
 
 app.get('/admin/unignore-user/:id', basicAuth(basicAuthOptions), function (req, res) {
 
   IgnoredUser.findByPk(req.params.id)
-  .then(function(user) {
+    .then(function (user) {
 
-    return user.destroy();
+      return user.destroy();
 
-  })
-  .then(function() {
-    res.redirect("/admin/ignored-users");
-  });
+    })
+    .then(function () {
+      res.redirect("/admin/ignored-users");
+    });
 
 });
 
@@ -229,37 +233,37 @@ app.post('/admin/ignore-user', basicAuth(basicAuthOptions), function (req, res) 
   var theUser = {};
 
   User.findByPk(req.body.user)
-  .then(function(user) {
+    .then(function (user) {
 
-    theUser = user;
+      theUser = user;
 
-    return IgnoredUser.create({
-      type: user.type,
-      username: user.username,
-      source_id: user.source_id
-    });
-
-  })
-  .then(function() {
-
-    if(req.body.delete_posts) {
-
-      return Post.destroy({
-        where: {
-          user_id: theUser.id
-        }
+      return IgnoredUser.create({
+        type: user.type,
+        username: user.username,
+        source_id: user.source_id
       });
 
-    } else {
+    })
+    .then(function () {
 
-      return 1;
+      if (req.body.delete_posts) {
 
-    }
+        return Post.destroy({
+          where: {
+            user_id: theUser.id
+          }
+        });
 
-  })
-  .then(function() {
-    res.redirect("/admin/ignored-users");
-  });
+      } else {
+
+        return 1;
+
+      }
+
+    })
+    .then(function () {
+      res.redirect("/admin/ignored-users");
+    });
 
 });
 
@@ -270,29 +274,29 @@ app.get('/admin/deleted-posts', basicAuth(basicAuthOptions), function (req, res)
       ['created_at', 'DESC']
     ]
   })
-  .then(function(posts) {
+    .then(function (posts) {
 
-    res.render('deleted-posts', {
-      deletedPosts: posts,
-      navActive: {
-        deletedPosts: true
-      }
+      res.render('deleted-posts', {
+        deletedPosts: posts,
+        navActive: {
+          deletedPosts: true
+        }
+      });
+
     });
-
-  });
 
 });
 
 app.get('/admin/undelete/:id', basicAuth(basicAuthOptions), function (req, res) {
 
   DeletedPost.findByPk(req.params.id)
-  .then(function(post) {
-    return post.destroy();
-  })
-  
-  .then(function() {
-    res.redirect("/admin/deleted-posts");
-  });
+    .then(function (post) {
+      return post.destroy();
+    })
+
+    .then(function () {
+      res.redirect("/admin/deleted-posts");
+    });
 
 });
 
