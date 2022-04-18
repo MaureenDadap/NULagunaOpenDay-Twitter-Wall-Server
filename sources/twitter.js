@@ -34,11 +34,19 @@ function createTweet(tweet) {
 
   var image = '';
 
-  if(typeof tweet.entities.media != "undefined" && tweet.entities.media[0].type=="photo") {
+  tweet.extended_entities.media.forEach(media => {
+    if(typeof media != "undefined" && media.type=="photo") {
 
-    image = tweet.entities.media[0].media_url;
+      image += media.media_url + ";";
+  
+    }
+  });
 
-  }
+  // if(typeof tweet.entities.media != "undefined" && tweet.entities.media[0].type=="photo") {
+
+  //   image = tweet.entities.media[0].media_url;
+
+  // }
 
   if(typeof tweet.retweeted_status != "undefined") {
 
