@@ -18,9 +18,9 @@ var T = new Twit({
 
 module.exports = {
 
-  updatePosts: function() { 
+  updatePosts: function () {
 
-    var stream = T.stream('statuses/filter', {track: config.hashtags.twitter});
+    var stream = T.stream('statuses/filter', { track: config.hashtags.twitter });
 
     stream.on('tweet', createTweet);
 
@@ -34,13 +34,12 @@ function createTweet(tweet) {
 
   var image = '';
 
-  tweet.extended_entities.media.forEach(media => {
-    if(typeof media != "undefined" && media.type=="photo") {
-
-      image += media.media_url + ";";
-  
-    }
-  });
+  if (typeof tweet.extended_entities != "undefined")
+    tweet.extended_entities.media.forEach(media => {
+      if (typeof media != "undefined" && media.type == "photo") {
+        image += media.media_url + ";";
+      }
+    });
 
   // if(typeof tweet.entities.media != "undefined" && tweet.entities.media[0].type=="photo") {
 
@@ -48,7 +47,7 @@ function createTweet(tweet) {
 
   // }
 
-  if(typeof tweet.retweeted_status != "undefined") {
+  if (typeof tweet.retweeted_status != "undefined") {
 
     // Is a retweet, skip
 
@@ -64,93 +63,93 @@ function createTweet(tweet) {
       source_id: tweet.user.id
     }
   })
-  .then(function(user) {
+    .then(function (user) {
 
-    if(!user) {
+      if (!user) {
 
-      // Check if post is in deleted_posts
+        // Check if post is in deleted_posts
 
-      return DeletedPost.findOne({
+        return DeletedPost.findOne({
+          where: {
+            type: config.POST_TYPE_TWITTER,
+            source_id: tweet.id_str
+          }
+        });
+
+      } else {
+
+        throw new Error('User set to be ignored');
+
+      }
+    })
+    .then(function (post) {
+
+      if (!post) {
+
+        return Post.create({
+          type: config.POST_TYPE_TWITTER,
+          source_id: tweet.id_str,
+          link: 'https://twitter.com/' + tweet.user.screen_name + '/status/' + tweet.id_str,
+          image: image,
+          created_at: postDate.getTime(),
+          caption: tweet.text
+        })
+
+      } else {
+
+        throw new Error('Post is in deleted_posts');
+
+      }
+    })
+    .then(function (post) {
+
+      console.log('Created new Twitter post:', post.link);
+
+      handledPost = post;
+
+      // Make sure the corresponding user is created
+
+      return User.findOne({
         where: {
           type: config.POST_TYPE_TWITTER,
-          source_id: tweet.id_str
+          source_id: tweet.user.id
         }
       });
 
-    } else {
+    })
+    .then(function (user) {
 
-      throw new Error('User set to be ignored');
+      if (user == null) {
 
-    }
-  })
-  .then(function(post) {
+        // Create user
 
-    if(!post) {
+        return User.create({
+          type: config.POST_TYPE_TWITTER,
+          source_id: tweet.user.id,
+          avatar: tweet.user.profile_image_url_https,
+          username: tweet.user.screen_name,
+          display_name: tweet.user.name
+        });
 
-      return Post.create({
-        type: config.POST_TYPE_TWITTER,
-        source_id: tweet.id_str,
-        link: 'https://twitter.com/'+tweet.user.screen_name+'/status/'+tweet.id_str,
-        image: image,
-        created_at: postDate.getTime(),
-        caption: tweet.text
-      })
+      } else {
 
-    } else {
+        handledPost.update({
+          user_id: user.id
+        });
 
-      throw new Error('Post is in deleted_posts');
+        throw new Error('User already exists');
 
-    }
-  })
-  .then(function(post) {
-
-    console.log('Created new Twitter post:', post.link);
-
-    handledPost = post;
-
-    // Make sure the corresponding user is created
-
-    return User.findOne({
-      where: {
-        type: config.POST_TYPE_TWITTER,
-        source_id: tweet.user.id
       }
-    });
 
-  })
-  .then(function(user) {
+    })
+    .then(function (user) {
 
-    if(user == null) {
-
-      // Create user
-
-      return User.create({
-        type: config.POST_TYPE_TWITTER,
-        source_id: tweet.user.id,
-        avatar: tweet.user.profile_image_url_https,
-        username: tweet.user.screen_name,
-        display_name: tweet.user.name
-      });
-
-    } else {
-
-      handledPost.update({
+      return handledPost.update({
         user_id: user.id
       });
 
-      throw new Error('User already exists');
-
-    }
-
-  })
-  .then(function(user) {
-
-    return handledPost.update({
-      user_id: user.id
+    })
+    .catch(function (e) {
+      console.log(e);
     });
-
-  })
-  .catch(function(e) {
-    console.log(e);
-  });
 }

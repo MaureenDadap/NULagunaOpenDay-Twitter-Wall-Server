@@ -1,4 +1,4 @@
-var instagram = require('./sources/instagram');
+// var instagram = require('./sources/instagram');  
 var twitter = require('./sources/twitter');
 
 var config = require('./config');
@@ -11,10 +11,10 @@ if(config.hashtags.twitter != '') {
 
 }
 
-if(config.hashtags.instagram != '') {
+// if(config.hashtags.instagram != '') {
 
-  console.log('Enabled Instagram feed');
+//   console.log('Enabled Instagram feed');
 
-  setInterval(instagram.updatePosts, config.instagram.update_interval);
+//   setInterval(instagram.updatePosts, config.instagram.update_interval);
 
-}
+// }
