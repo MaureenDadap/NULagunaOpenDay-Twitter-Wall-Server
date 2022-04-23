@@ -21,8 +21,10 @@ module.exports = {
   updatePosts: function () {
 
     var stream = T.stream('statuses/filter', { track: config.hashtags.twitter });
+    var stream2 = T.stream('statuses/filter', { track: config.hashtags.twitter2 });
 
     stream.on('tweet', createTweet);
+    stream2.on('tweet', createTweet);
 
   }
 
